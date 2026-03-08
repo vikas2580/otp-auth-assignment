@@ -1,67 +1,64 @@
 "use client";
 
-import { useState } from "react";
-import { API_URL } from "@/src/lib/api";
 import { useRouter } from "next/navigation";
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
+import { useState } from "react";
+
+import api from "@/src/lib/api";
+import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
-  const router = useRouter();
 
+  const router = useRouter();
   const [phone, setPhone] = useState("");
-  const [error, setError] = useState("");
 
   const sendOtp = async () => {
-    setError("");
 
-    // ✅ Validation
     if (!phone) {
-      return setError("Phone number is required");
-    }
-
-    if (!/^[0-9]{10}$/.test(phone)) {
-      return setError("Phone number must be 10 digits");
+      alert("Enter phone number");
+      return;
     }
 
     try {
-      await fetch(`${API_URL}/auth/send-otp`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          country_code: "+91",
-          phone_number: phone,
-        }),
+
+      const phoneNumber = phone.replace("+91", "");
+
+      await api.post("/auth/send-otp", {
+        country_code: "+91",
+        phone_number: phoneNumber,
       });
 
-      router.push(`/otp?phone=${phone}`);
-    } catch (err) {
-      setError("Error sending OTP");
+      router.push(`/otp?phone=${phoneNumber}`);
+
+    } catch (error) {
+      console.log(error);
+      alert("Error sending OTP");
     }
   };
 
   return (
     <div className="flex h-screen justify-center items-center">
-      <div className="p-6 border rounded w-80 space-y-3">
+
+      <div className="p-6 border rounded w-80 space-y-4">
+
         <h2 className="text-xl font-bold">Login</h2>
 
-        <input
-          type="text"
-          placeholder="Enter phone"
+        <PhoneInput
+          defaultCountry="IN"
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          className="border p-2 w-full"
+          onChange={setPhone}
         />
 
-        {error && <p className="text-red-500 text-sm">{error}</p>}
-
-        <button
+        <Button
           onClick={sendOtp}
-          className="bg-blue-600 text-white px-4 py-2 w-full"
+          className="w-full"
         >
           Send OTP
-        </button>
+        </Button>
+
       </div>
+
     </div>
   );
 }

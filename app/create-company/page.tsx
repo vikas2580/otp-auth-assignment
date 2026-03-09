@@ -1,95 +1,109 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useMutation } from "@tanstack/react-query";
+import { useForm, Controller } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
+
 import api from "@/src/lib/api";
 
-export default function CreateCompany() {
-  const router = useRouter();
-  const [name, setName] = useState("");
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
-  const createCompany = async () => {
-    await api.post("/companies", { name });
-    router.push("/dashboard");
+const schema = yup.object({
+  name: yup.string().required("Company name is required"),
+  phone: yup.string().required("Phone number is required"),
+});
+
+type FormData = {
+  name: string;
+  phone: string;
+};
+
+export default function CreateCompany() {
+
+  const router = useRouter();
+
+  const { register, handleSubmit, control, formState: { errors } } =
+    useForm<FormData>({
+      resolver: yupResolver(schema),
+    });
+
+  const mutation = useMutation({
+    mutationFn: (data: FormData) =>
+      api.post("/companies", data),
+
+    onSuccess: () => {
+      router.push("/dashboard");
+    },
+  });
+
+  const onSubmit = (data: FormData) => {
+    mutation.mutate(data);
   };
 
   return (
-    <div className="p-10">
-      <input
-        type="text"
-        placeholder="Company name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        className="border p-2"
-      />
+    <div className="flex h-screen justify-center items-center">
 
-      <button onClick={createCompany} className="ml-3 bg-blue-500 text-white p-2">
-        Create
-      </button>
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="p-6 border rounded w-96 space-y-4"
+      >
+
+        <h2 className="text-xl font-bold">
+          Create Company
+        </h2>
+
+        {/* Company Name */}
+        <div>
+          <Input
+            placeholder="Company name"
+            {...register("name")}
+          />
+
+          {errors.name && (
+            <p className="text-red-500 text-sm">
+              {errors.name.message}
+            </p>
+          )}
+        </div>
+
+        {/* Phone Number */}
+        <div>
+
+          <Controller
+            control={control}
+            name="phone"
+            render={({ field }) => (
+              <PhoneInput
+                {...field}
+                defaultCountry="IN"
+                className="border p-2 rounded w-full"
+              />
+            )}
+          />
+
+          {errors.phone && (
+            <p className="text-red-500 text-sm">
+              {errors.phone.message}
+            </p>
+          )}
+
+        </div>
+
+       <Button
+          type="submit"
+          className="w-full"
+          disabled={mutation.isPending}
+        >
+          {mutation.isPending ? "Creating..." : "Create"}
+        </Button>
+      </form>
+
     </div>
   );
 }
-
-// "use client";
-
-// import { useRouter } from "next/navigation";
-// import { useState } from "react";
-// import api from "@/src/lib/api";
-
-// import { Input } from "@/components/ui/input";
-// import { Button } from "@/components/ui/button";
-
-// export default function CreateCompany() {
-
-//   const router = useRouter();
-
-//   const [name, setName] = useState("");
-
-//   const createCompany = async () => {
-
-//     if (!name) {
-//       alert("Enter company name");
-//       return;
-//     }
-
-//     try {
-
-//       await api.post("/companies", {
-//         name: name,
-//       });
-
-//       router.push("/dashboard");
-
-//     } catch (error) {
-//       alert("Error creating company");
-//     }
-//   };
-
-//   return (
-
-//     <div className="flex h-screen justify-center items-center">
-
-//       <div className="p-6 border rounded w-80 space-y-4">
-
-//         <h2 className="text-xl font-bold">
-//           Create Company
-//         </h2>
-
-//         <Input
-//           placeholder="Company name"
-//           value={name}
-//           onChange={(e)=>setName(e.target.value)}
-//         />
-
-//         <Button
-//           onClick={createCompany}
-//           className="w-full"
-//         >
-//           Create
-//         </Button>
-
-//       </div>
-
-//     </div>
-//   );
-// }

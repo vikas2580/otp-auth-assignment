@@ -47,7 +47,7 @@ export default function LoginPage() {
         <PhoneInput
           defaultCountry="IN"
           value={phone}
-          onChange={setPhone}
+          onChange={(value) => setPhone(value || "")}
         />
 
         <Button
